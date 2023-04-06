@@ -2,10 +2,22 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
+public class Trees
+{
+    public float probability;
+    public GameObject treePrefab;
+}
+
 public class VolumeSpawner : MonoBehaviour
 {
+    public int seed;
+
     public Collider collider;
-    public GameObject prefab;
+    [Header("Clouds")]
+    public GameObject cloudPrefab;
+    [Header("Trees")]
+    public List<GameObject> gameObjectPrefabs;
     public bool spawnAtStart = true;
     public Vector2 count;
     public float height = 100;
@@ -14,12 +26,18 @@ public class VolumeSpawner : MonoBehaviour
     public bool randomRotation = true;
     public float spawnChance= 0.8f;
     public bool rayCastDown = false;
+    public bool placingClouds = false;
+    public bool placingTrees = false;
+    public LayerMask mask;
+    [SerializeField]List<Trees> treeClass = new List<Trees>();
+    
 
     public void Start()
     {
         if (spawnAtStart)
         {
             Spawn();
+            Random.InitState(seed);
         }
     }
     public void Spawn()
@@ -37,23 +55,36 @@ public class VolumeSpawner : MonoBehaviour
                 
                 var pos = new Vector3(x, height, z);
                 pos += Random.insideUnitSphere * offset;
-                var rot = Quaternion.Euler(0, 0, 0);
+                
                 if (rayCastDown && Physics.Raycast(pos, Vector3.down, out var hit))
                 {
+                    var rot = Quaternion.Euler(0, 0, 0);
+                    if (randomRotation)
+                    {
+                        rot = Quaternion.Euler(0, Random.Range(0f, 360f), 0);
+
+                    }
+                    if (placingClouds == true)
+                    {
+
+                        Instantiate(cloudPrefab, pos, rot);
+                        
+                    }
                     if (hit.collider.gameObject.CompareTag("Ground"))
                     {
-                        Debug.Log("RayCasted");
-                        Instantiate(prefab, pos, rot);
-                        Debug.DrawLine(transform.position, hit.point, Color.green);
-                    }
+                        
+                        if (placingTrees)
+                        {
+                            
+                            Instantiate(gameObjectPrefabs[Random.Range(0, gameObjectPrefabs.Count)], hit.point, rot);
+                            Debug.DrawLine(transform.position, hit.point, Color.red);
+                        }
 
+                    }
                     
                 }
-                if (randomRotation)
-                {
-                    rot = Quaternion.Euler(0, Random.Range(0f, 360f), 0);
-
-                }
+                
+                
                 
             }
             
